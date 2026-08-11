@@ -13,3 +13,4 @@ python-dotenv==1.0.1
 reportlab==5.0.0
 schedule==1.2.2
 Werkzeug==3.1.8
+gunicorn
