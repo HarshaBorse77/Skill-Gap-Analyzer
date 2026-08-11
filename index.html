@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Gap Analyzer V2</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="container nav">
+    <h1>Skill Gap Analyzer </h1>
+    <a href="{{ url_for('history') }}">History</a>
+  </div>
+</header>
+
+<main class="container">
+<section class="hero">
+  <h2>Know exactly what skills your target job requires.</h2>
+  <p>Upload a resume and paste a job description to calculate a weighted ATS skill score, identify gaps and get a learning roadmap.</p>
+</section>
+
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}<div class="alert">{{ message }}</div>{% endfor %}
+{% endwith %}
+
+<section class="card">
+<form method="POST" enctype="multipart/form-data">
+  <div class="grid two">
+    <div>
+      <label>Candidate Name</label>
+      <input name="candidate" placeholder="Harsha Borse">
+    </div>
+    <div>
+      <label>Target Role</label>
+      <input name="role" placeholder="Python Developer - Fresher">
+    </div>
+  </div>
+
+  <label>Resume (PDF or TXT)</label>
+  <input type="file" name="resume" accept=".pdf,.txt" required>
+
+  <label>Job Description</label>
+  <textarea name="job_text" rows="13" placeholder="Paste the complete job description here..." required></textarea>
+
+  <button>Analyze Skill Gap</button>
+</form>
+</section>
+
+{% if result %}
+<section class="dashboard">
+  <div class="score-panel card">
+    <div class="score-ring {{ result.level }}">{{ result.score }}%</div>
+    <div>
+      <p class="eyebrow">WEIGHTED ATS SKILL SCORE</p>
+      <h2>{{ result.label }}</h2>
+      <p>{{ result.candidate }} • {{ result.role }}</p>
+      <a class="button secondary" href="{{ url_for('report', analysis_id=result.id) }}">Download PDF Report</a>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><strong>{{ result.total }}</strong><span>Required Skills</span></div>
+    <div class="stat"><strong>{{ result.matched|length }}</strong><span>Matched</span></div>
+    <div class="stat"><strong>{{ result.missing|length }}</strong><span>Skill Gaps</span></div>
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>✓ Matched Skills</h3>
+      <div class="tags">{% for skill in result.matched %}<span class="tag yes">{{ skill }}</span>{% endfor %}</div>
+    </div>
+    <div class="card">
+      <h3>! Missing Skills</h3>
+      <div class="tags">{% for skill in result.missing %}<span class="tag no">{{ skill }}</span>{% endfor %}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Skill Comparison</h3>
+    {% for skill in result.job_skills %}
+      <div class="bar-row">
+        <div><span>{{ skill }}</span><small>{% if skill in result.matched %}Matched{% else %}Gap{% endif %}</small></div>
+        <div class="bar"><div class="fill {% if skill in result.matched %}good{% else %}gap{% endif %}" style="width:{% if skill in result.matched %}100{% else %}25{% endif %}%"></div></div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h3>Personalized Learning Roadmap</h3>
+    {% if result.missing %}
+      <ol class="roadmap">
+      {% for skill in result.missing %}
+        <li>
+          <strong>{{ skill }}</strong>
+          <p>{{ roadmap.get(skill, "Learn this skill, build a small project and add it to GitHub.") }}</p>
+        </li>
+      {% endfor %}
+      </ol>
+    {% else %}
+      <p>Excellent! No skill gaps were detected from the supported skill list.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>Skills Detected in Resume</h3>
+    <div class="tags">{% for skill in result.resume_skills %}<span class="tag">{{ skill }}</span>{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+</main>
+</body>
+</html>
